@@ -32,19 +32,27 @@ def anomaly_dhundo(df):
 
         if abs(z_score) >= threshold:
             date_val = df[date_col].iloc[i] if date_col in df.columns else i
+            pct_change = round(((value - avg) / avg) * 100, 1) if avg != 0 else 0.0
+            severity = "CRITICAL" if abs(z_score) >= 3 else "WARNING"
             anomalies.append({
                 "date": date_val,
                 "value": value,
                 "expected": round(avg, 2),
-                "z_score": round(z_score, 2)
+                "direction": "UP" if value > avg else "DOWN",
+                "change_pct": pct_change,
+                "z_score": round(z_score, 2),
+                "severity": severity
             })
     return anomalies
 
 def agent():
-    print(">> Baseline Z-Score Detection")
+    print(">> Baseline Anomaly Detection with Severity Tagging")
     data = excel_padho(cfg.INPUT_FILE)
+    print(f"Loaded {len(data)} rows.")
     anomalies = anomaly_dhundo(data)
-    print(f"Found {len(anomalies)} anomalies via rolling Z-Score.")
+    print(f"Detected {len(anomalies)} anomalies.")
+    for a in anomalies:
+        print(f" - {a['date']}: {a['direction']} ({a['change_pct']}%) [{a['severity']}] | Z-Score: {a['z_score']}")
 
 if __name__ == "__main__":
     agent()
